@@ -71,7 +71,7 @@ function EditorPage() {
   }, [user, loading, navigate]);
 
   function generate() {
-    if (!script.trim()) return toast.error("Paste a script first");
+    if (!script.trim()) { toast.error("Paste a script first"); return; }
     setGenerating(true);
     setTimeout(() => {
       setFrames(mockFrames);
