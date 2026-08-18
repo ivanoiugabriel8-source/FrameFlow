@@ -5,20 +5,19 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 
 export type Frame = {
   id: string;
-  character: string;
-  dialogue: string;
+  shot_number: number;
+  character: string | null;
+  dialogue: string | null;
   action: string;
-  emotion: string;
+  image_prompt?: string | null;
 };
 
 export function FrameCard({
   frame,
-  index,
   onDelete,
   onGenerate,
 }: {
   frame: Frame;
-  index: number;
   onDelete: (id: string) => void;
   onGenerate: (id: string) => void;
 }) {
@@ -29,18 +28,22 @@ export function FrameCard({
           <ImageIcon className="size-7 opacity-60 transition-transform duration-300 group-hover:scale-110" />
         </div>
         <span className="absolute left-3 top-3 rounded-full bg-background/80 px-2.5 py-0.5 text-xs font-medium backdrop-blur">
-          Frame {index + 1}
+          Shot {frame.shot_number}
         </span>
       </div>
 
       <CardContent className="space-y-2.5 pt-5">
         <div className="flex items-center justify-between gap-3">
-          <h3 className="min-w-0 truncate text-base font-bold tracking-tight">{frame.character}</h3>
-          <Badge variant="secondary" className="shrink-0 capitalize">
-            {frame.emotion}
+          <h3 className="min-w-0 truncate text-base font-bold tracking-tight">
+            {frame.character ?? "No character"}
+          </h3>
+          <Badge variant="secondary" className="shrink-0">
+            #{frame.shot_number}
           </Badge>
         </div>
-        <p className="text-sm italic text-foreground/90">&ldquo;{frame.dialogue}&rdquo;</p>
+        {frame.dialogue ? (
+          <p className="text-sm italic text-foreground/90">&ldquo;{frame.dialogue}&rdquo;</p>
+        ) : null}
         <p className="text-sm leading-relaxed text-muted-foreground">{frame.action}</p>
       </CardContent>
 
