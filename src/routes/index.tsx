@@ -80,13 +80,12 @@ function EditorPage() {
     }
     setGenerating(true);
     try {
-      const res = await fetch("/api/generate-storyboard", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ script, provider }),
+      const { data, error } = await supabase.functions.invoke("generate-storyboard", {
+        body: { script, provider },
       });
-      const payload = (await res.json()) as { frames?: unknown[]; error?: string };
-      if (!res.ok || payload.error) throw new Error(payload.error ?? "Generation failed");
+      if (error) throw new Error(error.message);
+      const payload = (data ?? {}) as { frames?: unknown[]; error?: string };
+      if (payload.error) throw new Error(payload.error);
 
       const parsed: Frame[] = (payload.frames ?? []).map((raw, i) => {
         const f = raw as Partial<Frame>;
