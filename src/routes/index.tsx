@@ -13,7 +13,6 @@ import {
 } from "@/components/ui/select";
 import { AppShell } from "@/components/AppShell";
 import { FrameCard, type Frame } from "@/components/FrameCard";
-import { supabase } from "@/integrations/supabase/client";
 import { db } from "@/integrations/supabase/tables";
 import { toast } from "sonner";
 
@@ -81,7 +80,7 @@ function EditorPage() {
     }
     setGenerating(true);
     try {
-      const { data, error } = await supabase.functions.invoke("generate-storyboard", {
+      const { data, error } = await db.functions.invoke("generate-storyboard", {
         body: { script, provider },
       });
       if (error) throw new Error(error.message);
