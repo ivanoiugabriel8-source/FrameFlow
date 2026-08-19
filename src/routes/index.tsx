@@ -133,7 +133,7 @@ function EditorPage() {
             <label className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
               <Cpu className="size-3.5" /> AI model
             </label>
-            <Select value={provider} onValueChange={setProvider} disabled={loadingModels}>
+            <Select value={selectedModelId} onValueChange={setSelectedModelId} disabled={loadingModels}>
               <SelectTrigger className="h-11 w-full rounded-xl border-border/60 bg-background/60">
                 <SelectValue
                   placeholder={loadingModels ? "Loading models…" : "Select an AI model"}
@@ -141,7 +141,7 @@ function EditorPage() {
               </SelectTrigger>
               <SelectContent className="rounded-xl">
                 {models.map((m) => (
-                  <SelectItem key={String(m.id ?? m.provider)} value={m.provider}>
+                  <SelectItem key={String(m.id)} value={String(m.id)}>
                     {m.name}
                   </SelectItem>
                 ))}
