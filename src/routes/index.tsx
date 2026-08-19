@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/select";
 import { AppShell } from "@/components/AppShell";
 import { FrameCard, type Frame } from "@/components/FrameCard";
-import { supabase } from "@/integrations/supabase/client";
+import { db } from "@/integrations/supabase/tables";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/")({
@@ -50,10 +50,10 @@ function EditorPage() {
   useEffect(() => {
     let active = true;
     (async () => {
-      const { data, error } = await supabase
-        .from("ai_models" as never)
+      const { data, error } = await db
+        .from("ai_models")
         .select("*")
-        .eq("model_type" as never, "text" as never);
+        .eq("model_type", "text");
       if (!active) return;
       if (error) {
         toast.error("Could not load AI models", { description: error.message });
@@ -80,7 +80,7 @@ function EditorPage() {
     }
     setGenerating(true);
     try {
-      const { data, error } = await supabase.functions.invoke("generate-storyboard", {
+      const { data, error } = await db.functions.invoke("generate-storyboard", {
         body: { script, provider },
       });
       if (error) throw new Error(error.message);
