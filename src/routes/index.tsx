@@ -14,6 +14,7 @@ import {
 import { AppShell } from "@/components/AppShell";
 import { FrameCard, type Frame } from "@/components/FrameCard";
 import { supabase } from "@/integrations/supabase/client";
+import { db } from "@/integrations/supabase/tables";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/")({
