@@ -44,8 +44,10 @@ function EditorPage() {
   const [frames, setFrames] = useState<Frame[]>([]);
   const [generating, setGenerating] = useState(false);
   const [models, setModels] = useState<AiModel[]>([]);
-  const [provider, setProvider] = useState<string>("");
+  const [selectedModelId, setSelectedModelId] = useState<string>("");
   const [loadingModels, setLoadingModels] = useState(true);
+
+  const selectedProvider = models.find((m) => String(m.id) === selectedModelId)?.provider ?? "";
 
   useEffect(() => {
     let active = true;
@@ -60,7 +62,7 @@ function EditorPage() {
       } else {
         const list = ((data ?? []) as unknown as AiModel[]).filter((m) => m?.provider);
         setModels(list);
-        if (list[0]) setProvider(list[0].provider);
+        if (list[0]) setSelectedModelId(String(list[0].id));
       }
       setLoadingModels(false);
     })();
@@ -74,14 +76,14 @@ function EditorPage() {
       toast.error("Paste a script first");
       return;
     }
-    if (!provider) {
+    if (!selectedProvider) {
       toast.error("Pick an AI model first");
       return;
     }
     setGenerating(true);
     try {
       const { data, error } = await db.functions.invoke("generate-storyboard", {
-        body: { script, provider },
+        body: { script, provider: selectedProvider },
       });
       if (error) throw new Error(error.message);
       const payload = (data ?? {}) as { frames?: unknown[]; error?: string };
