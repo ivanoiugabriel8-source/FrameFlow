@@ -50,10 +50,10 @@ function EditorPage() {
   useEffect(() => {
     let active = true;
     (async () => {
-      const { data, error } = await supabase
-        .from("ai_models" as never)
+      const { data, error } = await db
+        .from("ai_models")
         .select("*")
-        .eq("model_type" as never, "text" as never);
+        .eq("model_type", "text");
       if (!active) return;
       if (error) {
         toast.error("Could not load AI models", { description: error.message });
