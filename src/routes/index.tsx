@@ -127,10 +127,12 @@ function EditorPage() {
         body: { script, provider: selectedProvider },
       });
       if (error) throw new Error(error.message);
-      const payload = (data ?? {}) as { frames?: unknown[]; error?: string };
-      if (payload.error) throw new Error(payload.error);
+      if (data && !Array.isArray(data) && typeof data === "object" && "error" in data) {
+        throw new Error(String((data as { error: unknown }).error));
+      }
+      const rawFrames: unknown[] = Array.isArray(data) ? data : [];
 
-      const parsed: Frame[] = (payload.frames ?? []).map((raw, i) => {
+      const parsed: Frame[] = rawFrames.map((raw, i) => {
         const f = raw as Partial<Frame>;
         return {
           id: `${Date.now()}-${i}`,
