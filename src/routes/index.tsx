@@ -96,10 +96,9 @@ function EditorPage() {
       if (error) throw new Error(error.message);
       const payload = (data ?? {}) as { image?: string; error?: string };
       if (payload.error) throw new Error(payload.error);
-      if (!payload.image) throw new Error("No image returned");
-      setFrames((prev) =>
-        prev.map((f) => (f.id === frameId ? { ...f, image_url: payload.image } : f)),
-      );
+      const image = payload.image;
+      if (!image) throw new Error("No image returned");
+      setFrames((prev) => prev.map((f) => (f.id === frameId ? { ...f, image_url: image } : f)));
     } catch (err) {
       toast.error("Image generation failed", {
         description: err instanceof Error ? err.message : "Unknown error",
