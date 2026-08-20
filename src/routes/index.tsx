@@ -210,7 +210,8 @@ function EditorPage() {
                     key={frame.id}
                     frame={frame}
                     onDelete={(id) => setFrames((f) => f.filter((x) => x.id !== id))}
-                    onGenerate={() => toast.info("Image generation coming soon")}
+                    onGenerate={generateImage}
+                    isGenerating={generatingImages.has(frame.id)}
                   />
                 ))}
               </div>
