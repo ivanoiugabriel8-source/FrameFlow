@@ -18,6 +18,27 @@ export type AiModelRow = {
   is_active: boolean;
 };
 
+export type ProjectRow = {
+  id: string;
+  user_id: string | null;
+  title: string;
+  raw_script: string | null;
+  created_at: string;
+};
+
+export type FrameRow = {
+  id: string;
+  project_id: string;
+  user_id: string | null;
+  frame_number: number;
+  character_name: string | null;
+  dialogue: string | null;
+  action_description: string | null;
+  image_prompt: string | null;
+  image_url: string | null;
+  created_at?: string;
+};
+
 type CustomDatabase = {
   public: {
     Tables: {
@@ -25,6 +46,18 @@ type CustomDatabase = {
         Row: AiModelRow;
         Insert: Partial<AiModelRow> & { name: string; provider: string; model_type: string };
         Update: Partial<AiModelRow>;
+        Relationships: [];
+      };
+      projects: {
+        Row: ProjectRow;
+        Insert: Partial<ProjectRow> & { title: string };
+        Update: Partial<ProjectRow>;
+        Relationships: [];
+      };
+      frames: {
+        Row: FrameRow;
+        Insert: Partial<FrameRow> & { project_id: string; frame_number: number };
+        Update: Partial<FrameRow>;
         Relationships: [];
       };
     };
