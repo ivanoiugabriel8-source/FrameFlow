@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { Loader2, Wand2, LayoutGrid, Cpu } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -11,9 +11,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { AppShell } from "@/components/AppShell";
+import { AppShell, type RecentProject } from "@/components/AppShell";
 import { FrameCard, type Frame } from "@/components/FrameCard";
-import { db } from "@/integrations/supabase/tables";
+import { db, type FrameRow } from "@/integrations/supabase/tables";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/")({
@@ -39,6 +39,18 @@ export const Route = createFileRoute("/")({
 
 type AiModel = { id: string | number; name: string; provider: string };
 
+function rowToFrame(row: FrameRow): Frame {
+  return {
+    id: row.id,
+    shot_number: row.frame_number,
+    character: row.character_name,
+    dialogue: row.dialogue,
+    action: row.action_description ?? "",
+    image_prompt: row.image_prompt,
+    image_url: row.image_url,
+  };
+}
+
 function EditorPage() {
   const [script, setScript] = useState("");
   const [frames, setFrames] = useState<Frame[]>([]);
@@ -48,16 +60,34 @@ function EditorPage() {
   const [loadingModels, setLoadingModels] = useState(true);
   const [imageModelProvider, setImageModelProvider] = useState<string>("");
   const [generatingImages, setGeneratingImages] = useState<Set<string>>(new Set());
+  const [currentProjectId, setCurrentProjectId] = useState<string | null>(null);
+  const [recentProjects, setRecentProjects] = useState<RecentProject[]>([]);
 
   const selectedProvider = models.find((m) => String(m.id) === selectedModelId)?.provider ?? "";
+
+  const loadRecentProjects = useCallback(async () => {
+    const { data, error } = await db
+      .from("projects")
+      .select("id, title, created_at, frames(count)")
+      .order("created_at", { ascending: false })
+      .limit(10);
+    if (error) return;
+    const list = ((data ?? []) as unknown as Array<{
+      id: string;
+      title: string;
+      frames?: { count: number }[] | null;
+    }>).map((p) => ({
+      id: p.id,
+      title: p.title || "Untitled project",
+      frameCount: p.frames?.[0]?.count ?? 0,
+    }));
+    setRecentProjects(list);
+  }, []);
 
   useEffect(() => {
     let active = true;
     (async () => {
-      const { data, error } = await db
-        .from("ai_models")
-        .select("*")
-        .eq("model_type", "text");
+      const { data, error } = await db.from("ai_models").select("*").eq("model_type", "text");
       if (!active) return;
       if (error) {
         toast.error("Could not load AI models", { description: error.message });
@@ -68,18 +98,48 @@ function EditorPage() {
       }
       setLoadingModels(false);
 
-      const { data: imageData } = await db
-        .from("ai_models")
-        .select("*")
-        .eq("model_type", "image");
+      const { data: imageData } = await db.from("ai_models").select("*").eq("model_type", "image");
       if (!active) return;
       const firstImage = ((imageData ?? []) as unknown as AiModel[]).find((m) => m?.provider);
       if (firstImage) setImageModelProvider(firstImage.provider);
     })();
+    void loadRecentProjects();
     return () => {
       active = false;
     };
-  }, []);
+  }, [loadRecentProjects]);
+
+  async function openProject(projectId: string) {
+    try {
+      const { data: project, error: projectError } = await db
+        .from("projects")
+        .select("*")
+        .eq("id", projectId)
+        .maybeSingle();
+      if (projectError) throw new Error(projectError.message);
+
+      const { data: frameRows, error: framesError } = await db
+        .from("frames")
+        .select("*")
+        .eq("project_id", projectId)
+        .order("frame_number", { ascending: true });
+      if (framesError) throw new Error(framesError.message);
+
+      setCurrentProjectId(projectId);
+      setScript(project?.raw_script ?? "");
+      setFrames(((frameRows ?? []) as FrameRow[]).map(rowToFrame));
+    } catch (err) {
+      toast.error("Could not load project", {
+        description: err instanceof Error ? err.message : "Unknown error",
+      });
+    }
+  }
+
+  function newProject() {
+    setCurrentProjectId(null);
+    setScript("");
+    setFrames([]);
+  }
 
   async function generateImage(frameId: string) {
     const frame = frames.find((f) => f.id === frameId);
@@ -99,6 +159,14 @@ function EditorPage() {
       const image = payload.image;
       if (!image) throw new Error("No image returned");
       setFrames((prev) => prev.map((f) => (f.id === frameId ? { ...f, image_url: image } : f)));
+
+      const { error: updateError } = await db
+        .from("frames")
+        .update({ image_url: image })
+        .eq("id", frameId);
+      if (updateError) {
+        toast.error("Image not saved", { description: updateError.message });
+      }
     } catch (err) {
       toast.error("Image generation failed", {
         description: err instanceof Error ? err.message : "Unknown error",
@@ -132,19 +200,47 @@ function EditorPage() {
       }
       const rawFrames: unknown[] = Array.isArray(data) ? data : [];
 
-      const parsed: Frame[] = rawFrames.map((raw, i) => {
+      const userId = (await db.auth.getUser()).data.user?.id ?? null;
+
+      const title = script.trim() ? script.trim().slice(0, 40) : "Untitled project";
+      const { data: project, error: projectError } = await db
+        .from("projects")
+        .insert({ user_id: userId, title, raw_script: script })
+        .select("id")
+        .single();
+      if (projectError) throw new Error(projectError.message);
+      const projectId = project.id;
+
+      const inserts = rawFrames.map((raw, i) => {
         const f = raw as Partial<Frame>;
         return {
-          id: `${Date.now()}-${i}`,
-          shot_number: Number(f.shot_number ?? i + 1),
-          character: f.character ?? null,
+          project_id: projectId,
+          user_id: userId,
+          frame_number: Number(f.shot_number ?? i + 1),
+          character_name: f.character ?? null,
           dialogue: f.dialogue ?? null,
-          action: f.action ?? "",
+          action_description: f.action ?? "",
           image_prompt: f.image_prompt ?? null,
+          image_url: null,
         };
       });
-      setFrames(parsed);
-      toast.success("Storyboard generated", { description: `${parsed.length} frames ready.` });
+
+      let insertedFrames: FrameRow[] = [];
+      if (inserts.length > 0) {
+        const { data: rows, error: framesError } = await db
+          .from("frames")
+          .insert(inserts)
+          .select("*");
+        if (framesError) throw new Error(framesError.message);
+        insertedFrames = ((rows ?? []) as FrameRow[]).sort(
+          (a, b) => a.frame_number - b.frame_number,
+        );
+      }
+
+      setCurrentProjectId(projectId);
+      setFrames(insertedFrames.map(rowToFrame));
+      void loadRecentProjects();
+      toast.success("Storyboard generated", { description: `${rawFrames.length} frames ready.` });
     } catch (error) {
       toast.error("Generation failed", {
         description: error instanceof Error ? error.message : "Unknown error",
@@ -155,7 +251,11 @@ function EditorPage() {
   }
 
   return (
-    <AppShell>
+    <AppShell
+      projects={recentProjects}
+      onSelectProject={(id) => void openProject(id)}
+      onNewProject={newProject}
+    >
       <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-8 sm:py-12">
         <header className="mb-8">
           <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Storyboard editor</h1>
