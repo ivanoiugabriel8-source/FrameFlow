@@ -46,6 +46,8 @@ function EditorPage() {
   const [models, setModels] = useState<AiModel[]>([]);
   const [selectedModelId, setSelectedModelId] = useState<string>("");
   const [loadingModels, setLoadingModels] = useState(true);
+  const [imageModelProvider, setImageModelProvider] = useState<string>("");
+  const [generatingImages, setGeneratingImages] = useState<Set<string>>(new Set());
 
   const selectedProvider = models.find((m) => String(m.id) === selectedModelId)?.provider ?? "";
 
@@ -65,11 +67,50 @@ function EditorPage() {
         if (list[0]) setSelectedModelId(String(list[0].id));
       }
       setLoadingModels(false);
+
+      const { data: imageData } = await db
+        .from("ai_models")
+        .select("*")
+        .eq("model_type", "image");
+      if (!active) return;
+      const firstImage = ((imageData ?? []) as unknown as AiModel[]).find((m) => m?.provider);
+      if (firstImage) setImageModelProvider(firstImage.provider);
     })();
     return () => {
       active = false;
     };
   }, []);
+
+  async function generateImage(frameId: string) {
+    const frame = frames.find((f) => f.id === frameId);
+    if (!frame) return;
+    if (!imageModelProvider) {
+      toast.error("No image model available");
+      return;
+    }
+    setGeneratingImages((s) => new Set(s).add(frameId));
+    try {
+      const { data, error } = await db.functions.invoke("generate-image", {
+        body: { prompt: frame.image_prompt || frame.action, provider: imageModelProvider },
+      });
+      if (error) throw new Error(error.message);
+      const payload = (data ?? {}) as { image?: string; error?: string };
+      if (payload.error) throw new Error(payload.error);
+      const image = payload.image;
+      if (!image) throw new Error("No image returned");
+      setFrames((prev) => prev.map((f) => (f.id === frameId ? { ...f, image_url: image } : f)));
+    } catch (err) {
+      toast.error("Image generation failed", {
+        description: err instanceof Error ? err.message : "Unknown error",
+      });
+    } finally {
+      setGeneratingImages((s) => {
+        const next = new Set(s);
+        next.delete(frameId);
+        return next;
+      });
+    }
+  }
 
   async function generate() {
     if (!script.trim()) {
@@ -86,10 +127,12 @@ function EditorPage() {
         body: { script, provider: selectedProvider },
       });
       if (error) throw new Error(error.message);
-      const payload = (data ?? {}) as { frames?: unknown[]; error?: string };
-      if (payload.error) throw new Error(payload.error);
+      if (data && !Array.isArray(data) && typeof data === "object" && "error" in data) {
+        throw new Error(String((data as { error: unknown }).error));
+      }
+      const rawFrames: unknown[] = Array.isArray(data) ? data : [];
 
-      const parsed: Frame[] = (payload.frames ?? []).map((raw, i) => {
+      const parsed: Frame[] = rawFrames.map((raw, i) => {
         const f = raw as Partial<Frame>;
         return {
           id: `${Date.now()}-${i}`,
@@ -167,7 +210,8 @@ function EditorPage() {
                     key={frame.id}
                     frame={frame}
                     onDelete={(id) => setFrames((f) => f.filter((x) => x.id !== id))}
-                    onGenerate={() => toast.info("Image generation coming soon")}
+                    onGenerate={generateImage}
+                    isGenerating={generatingImages.has(frame.id)}
                   />
                 ))}
               </div>
