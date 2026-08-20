@@ -77,7 +77,7 @@ export function AppShell({
               </SheetTrigger>
               <SheetContent side="left" className="w-72 p-0">
                 <SheetTitle className="sr-only">Navigation</SheetTitle>
-                <SidebarBody />
+                <SidebarBody projects={projects} onSelectProject={onSelectProject} onNewProject={onNewProject} />
               </SheetContent>
             </Sheet>
 
@@ -115,7 +115,7 @@ export function AppShell({
 
       <div className="mx-auto flex w-full max-w-[1600px]">
         <aside className="sticky top-[61px] hidden h-[calc(100vh-61px)] w-72 shrink-0 border-r border-border/60 lg:block">
-          <SidebarBody />
+          <SidebarBody projects={projects} onSelectProject={onSelectProject} onNewProject={onNewProject} />
         </aside>
         <main className="min-w-0 flex-1">{children}</main>
       </div>
