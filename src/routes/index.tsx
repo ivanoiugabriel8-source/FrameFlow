@@ -202,7 +202,7 @@ function EditorPage() {
     setGenerating(true);
     try {
       const { data, error } = await db.functions.invoke("generate-storyboard", {
-        body: { script, provider: selectedProvider },
+        body: { script, provider: selectedProvider, durationMinutes },
       });
       if (error) throw new Error(error.message);
       const payload = data as { frames?: unknown; error?: unknown } | undefined;
