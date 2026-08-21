@@ -195,10 +195,12 @@ function EditorPage() {
         body: { script, provider: selectedProvider },
       });
       if (error) throw new Error(error.message);
-      if (data && !Array.isArray(data) && typeof data === "object" && "error" in data) {
-        throw new Error(String((data as { error: unknown }).error));
+      const payload = data as { frames?: unknown; error?: unknown } | undefined;
+      if (payload && !Array.isArray(payload) && typeof payload === "object" && "error" in payload) {
+        throw new Error(String(payload.error));
       }
-      const rawFrames: unknown[] = Array.isArray(data) ? data : [];
+      const rawFrames: unknown[] =
+        payload && Array.isArray(payload.frames) ? payload.frames : [];
 
       const userId = (await db.auth.getUser()).data.user?.id ?? null;
 
