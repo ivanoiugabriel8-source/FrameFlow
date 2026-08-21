@@ -284,24 +284,47 @@ function EditorPage() {
             className="min-h-56 resize-y rounded-xl border-border/60 bg-background/60 font-mono text-sm leading-relaxed focus-visible:ring-primary/40"
           />
 
-          <div className="mt-4 space-y-2">
-            <label className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              <Cpu className="size-3.5" /> AI model
-            </label>
-            <Select value={selectedModelId} onValueChange={setSelectedModelId} disabled={loadingModels}>
-              <SelectTrigger className="h-11 w-full rounded-xl border-border/60 bg-background/60">
-                <SelectValue
-                  placeholder={loadingModels ? "Loading models…" : "Select an AI model"}
-                />
-              </SelectTrigger>
-              <SelectContent className="rounded-xl">
-                {models.map((m) => (
-                  <SelectItem key={String(m.id)} value={String(m.id)}>
-                    {m.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                <Cpu className="size-3.5" /> AI model
+              </label>
+              <Select value={selectedModelId} onValueChange={setSelectedModelId} disabled={loadingModels}>
+                <SelectTrigger className="h-11 w-full rounded-xl border-border/60 bg-background/60">
+                  <SelectValue
+                    placeholder={loadingModels ? "Loading models…" : "Select an AI model"}
+                  />
+                </SelectTrigger>
+                <SelectContent className="rounded-xl">
+                  {models.map((m) => (
+                    <SelectItem key={String(m.id)} value={String(m.id)}>
+                      {m.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                <Clock className="size-3.5" /> Video length
+              </label>
+              <Select
+                value={String(durationMinutes)}
+                onValueChange={(v) => setDurationMinutes(Number(v))}
+              >
+                <SelectTrigger className="h-11 w-full rounded-xl border-border/60 bg-background/60">
+                  <SelectValue placeholder="Select video length" />
+                </SelectTrigger>
+                <SelectContent className="rounded-xl">
+                  {DURATION_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={String(opt.value)}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <Button size="lg" className="mt-4 w-full gap-2" disabled={generating} onClick={generate}>
