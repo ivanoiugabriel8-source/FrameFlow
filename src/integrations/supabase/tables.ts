@@ -36,7 +36,19 @@ export type FrameRow = {
   action_description: string | null;
   image_prompt: string | null;
   image_url: string | null;
+  landscape_description: string | null;
+  characters_present: string | null;
+  action_and_movement: string | null;
+  background_sounds: string | null;
+  manual_image_prompt: string | null;
   created_at?: string;
+};
+
+export type EpisodeDurationRow = {
+  id: string;
+  label: string;
+  minutes: number;
+  sort_order: number;
 };
 
 type CustomDatabase = {
@@ -58,6 +70,12 @@ type CustomDatabase = {
         Row: FrameRow;
         Insert: Partial<FrameRow> & { project_id: string; frame_number: number };
         Update: Partial<FrameRow>;
+        Relationships: [];
+      };
+      episode_durations: {
+        Row: EpisodeDurationRow;
+        Insert: Partial<EpisodeDurationRow> & { label: string; minutes: number };
+        Update: Partial<EpisodeDurationRow>;
         Relationships: [];
       };
     };
