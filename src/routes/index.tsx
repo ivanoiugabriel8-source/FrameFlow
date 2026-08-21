@@ -71,6 +71,7 @@ function EditorPage() {
   const [generatingImages, setGeneratingImages] = useState<Set<string>>(new Set());
   const [currentProjectId, setCurrentProjectId] = useState<string | null>(null);
   const [recentProjects, setRecentProjects] = useState<RecentProject[]>([]);
+  const [durationMinutes, setDurationMinutes] = useState<number>(1);
 
   const selectedProvider = models.find((m) => String(m.id) === selectedModelId)?.provider ?? "";
 
