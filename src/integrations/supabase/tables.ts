@@ -72,6 +72,12 @@ type CustomDatabase = {
         Update: Partial<FrameRow>;
         Relationships: [];
       };
+      episode_durations: {
+        Row: EpisodeDurationRow;
+        Insert: Partial<EpisodeDurationRow> & { label: string; minutes: number };
+        Update: Partial<EpisodeDurationRow>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
