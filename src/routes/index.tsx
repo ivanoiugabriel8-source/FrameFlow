@@ -39,6 +39,15 @@ export const Route = createFileRoute("/")({
 
 type AiModel = { id: string | number; name: string; provider: string };
 
+const DURATION_OPTIONS = [
+  { label: "30 seconds", value: 0.5 },
+  { label: "1 minute", value: 1 },
+  { label: "2 minutes", value: 2 },
+  { label: "3 minutes", value: 3 },
+  { label: "5 minutes", value: 5 },
+  { label: "10 minutes", value: 10 },
+];
+
 function rowToFrame(row: FrameRow): Frame {
   return {
     id: row.id,
