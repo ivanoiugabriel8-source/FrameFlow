@@ -11,9 +11,9 @@ import { toast } from "sonner";
 export type RecentProject = { id: string; title: string; frameCount: number };
 
 type SidebarProps = {
-  projects?: RecentProject[];
-  onSelectProject?: (id: string) => void;
-  onNewProject?: () => void;
+  projects?: RecentProject[] | undefined;
+  onSelectProject?: ((id: string) => void) | undefined;
+  onNewProject?: (() => void) | undefined;
 };
 
 function SidebarBody({ projects, onSelectProject, onNewProject }: SidebarProps) {
