@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Loader2, Wand2, LayoutGrid, Cpu } from "lucide-react";
+import { Loader2, Wand2, LayoutGrid, Cpu, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
@@ -39,6 +39,15 @@ export const Route = createFileRoute("/")({
 
 type AiModel = { id: string | number; name: string; provider: string };
 
+const DURATION_OPTIONS = [
+  { label: "30 seconds", value: 0.5 },
+  { label: "1 minute", value: 1 },
+  { label: "2 minutes", value: 2 },
+  { label: "3 minutes", value: 3 },
+  { label: "5 minutes", value: 5 },
+  { label: "10 minutes", value: 10 },
+];
+
 function rowToFrame(row: FrameRow): Frame {
   return {
     id: row.id,
@@ -62,6 +71,7 @@ function EditorPage() {
   const [generatingImages, setGeneratingImages] = useState<Set<string>>(new Set());
   const [currentProjectId, setCurrentProjectId] = useState<string | null>(null);
   const [recentProjects, setRecentProjects] = useState<RecentProject[]>([]);
+  const [durationMinutes, setDurationMinutes] = useState<number>(1);
 
   const selectedProvider = models.find((m) => String(m.id) === selectedModelId)?.provider ?? "";
 
@@ -192,7 +202,7 @@ function EditorPage() {
     setGenerating(true);
     try {
       const { data, error } = await db.functions.invoke("generate-storyboard", {
-        body: { script, provider: selectedProvider },
+        body: { script, provider: selectedProvider, durationMinutes },
       });
       if (error) throw new Error(error.message);
       const payload = data as { frames?: unknown; error?: unknown } | undefined;
@@ -274,24 +284,47 @@ function EditorPage() {
             className="min-h-56 resize-y rounded-xl border-border/60 bg-background/60 font-mono text-sm leading-relaxed focus-visible:ring-primary/40"
           />
 
-          <div className="mt-4 space-y-2">
-            <label className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              <Cpu className="size-3.5" /> AI model
-            </label>
-            <Select value={selectedModelId} onValueChange={setSelectedModelId} disabled={loadingModels}>
-              <SelectTrigger className="h-11 w-full rounded-xl border-border/60 bg-background/60">
-                <SelectValue
-                  placeholder={loadingModels ? "Loading models…" : "Select an AI model"}
-                />
-              </SelectTrigger>
-              <SelectContent className="rounded-xl">
-                {models.map((m) => (
-                  <SelectItem key={String(m.id)} value={String(m.id)}>
-                    {m.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                <Cpu className="size-3.5" /> AI model
+              </label>
+              <Select value={selectedModelId} onValueChange={setSelectedModelId} disabled={loadingModels}>
+                <SelectTrigger className="h-11 w-full rounded-xl border-border/60 bg-background/60">
+                  <SelectValue
+                    placeholder={loadingModels ? "Loading models…" : "Select an AI model"}
+                  />
+                </SelectTrigger>
+                <SelectContent className="rounded-xl">
+                  {models.map((m) => (
+                    <SelectItem key={String(m.id)} value={String(m.id)}>
+                      {m.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                <Clock className="size-3.5" /> Video length
+              </label>
+              <Select
+                value={String(durationMinutes)}
+                onValueChange={(v) => setDurationMinutes(Number(v))}
+              >
+                <SelectTrigger className="h-11 w-full rounded-xl border-border/60 bg-background/60">
+                  <SelectValue placeholder="Select video length" />
+                </SelectTrigger>
+                <SelectContent className="rounded-xl">
+                  {DURATION_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={String(opt.value)}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <Button size="lg" className="mt-4 w-full gap-2" disabled={generating} onClick={generate}>
