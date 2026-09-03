@@ -160,8 +160,21 @@ export function FrameCard({
 
       <CardFooter className="flex items-center gap-2 border-t border-border/60 pt-4">
         <Button
-          variant="secondary"
           className="flex-1 gap-2"
+          disabled={generating}
+          onClick={() => onGenerateImage(frame)}
+        >
+          {generating ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : (
+            <Sparkles className="size-4" />
+          )}
+          {generating ? "Generating…" : "Generate Image"}
+        </Button>
+        <Button
+          variant="secondary"
+          size="icon"
+          aria-label={frame.image_url ? "Change image URL" : "Add image URL"}
           onClick={() => {
             setUrlDraft(frame.image_url ?? "");
             setEditing((v) => !v);
