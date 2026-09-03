@@ -6,7 +6,9 @@ import {
   Copy,
   ImageIcon,
   Link2,
+  Loader2,
   MapPin,
+  Sparkles,
   Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
