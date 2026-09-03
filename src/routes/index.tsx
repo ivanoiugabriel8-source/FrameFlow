@@ -82,6 +82,49 @@ function EditorPage() {
   const [recentProjects, setRecentProjects] = useState<RecentProject[]>([]);
   const [durations, setDurations] = useState<EpisodeDurationRow[]>([]);
   const [durationMinutes, setDurationMinutes] = useState<number>(5);
+  const [generatingImages, setGeneratingImages] = useState<Set<string>>(new Set());
+
+  async function generateImage(frame: Frame) {
+    const prompt =
+      frame.manual_image_prompt || frame.action_and_movement || frame.landscape_description;
+    if (!prompt) {
+      toast.error("This frame has no image prompt");
+      return;
+    }
+    setGeneratingImages((prev) => new Set(prev).add(frame.id));
+    try {
+      const { data, error } = await db.functions.invoke("generate-image", {
+        body: { prompt },
+      });
+      if (error) throw new Error(error.message);
+      const payload = data as { image?: string; error?: string } | undefined;
+      if (payload?.error) throw new Error(payload.error);
+      if (!payload?.image) throw new Error("No image returned");
+
+      setFrames((prev) =>
+        prev.map((f) => (f.id === frame.id ? { ...f, image_url: payload.image ?? null } : f)),
+      );
+      const { error: updateError } = await db
+        .from("frames")
+        .update({ image_url: payload.image })
+        .eq("id", frame.id);
+      if (updateError) {
+        toast.warning("Image generated but not saved", { description: updateError.message });
+      } else {
+        toast.success(`Image ready for shot ${frame.frame_number}`);
+      }
+    } catch (err) {
+      toast.error("Image generation failed", {
+        description: err instanceof Error ? err.message : "Unknown error",
+      });
+    } finally {
+      setGeneratingImages((prev) => {
+        const next = new Set(prev);
+        next.delete(frame.id);
+        return next;
+      });
+    }
+  }
 
   const selectedProvider = models.find((m) => String(m.id) === selectedModelId)?.provider ?? "";
 
