@@ -181,7 +181,6 @@ export function FrameCard({
           }}
         >
           <Link2 className="size-4" />
-          {frame.image_url ? "Change image" : "Add image URL"}
         </Button>
         <Button
           variant="ghost"
