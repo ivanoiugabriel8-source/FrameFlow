@@ -6,7 +6,9 @@ import {
   Copy,
   ImageIcon,
   Link2,
+  Loader2,
   MapPin,
+  Sparkles,
   Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -35,10 +37,14 @@ export function FrameCard({
   frame,
   onDelete,
   onSetImageUrl,
+  onGenerateImage,
+  generating = false,
 }: {
   frame: Frame;
   onDelete: (id: string) => void;
   onSetImageUrl: (id: string, url: string) => void;
+  onGenerateImage: (frame: Frame) => void;
+  generating?: boolean;
 }) {
   const [editing, setEditing] = useState(false);
   const [urlDraft, setUrlDraft] = useState(frame.image_url ?? "");
@@ -65,6 +71,12 @@ export function FrameCard({
             <ImageIcon className="size-7 opacity-60 transition-transform duration-300 group-hover:scale-110" />
           </div>
         )}
+        {generating ? (
+          <div className="absolute inset-0 grid place-items-center gap-2 bg-background/70 backdrop-blur-sm">
+            <Loader2 className="size-6 animate-spin text-primary" />
+            <span className="text-xs text-muted-foreground">Generating image…</span>
+          </div>
+        ) : null}
         <span className="absolute left-3 top-3 rounded-full bg-background/80 px-2.5 py-0.5 text-xs font-medium backdrop-blur">
           Shot {frame.frame_number}
         </span>
@@ -148,15 +160,27 @@ export function FrameCard({
 
       <CardFooter className="flex items-center gap-2 border-t border-border/60 pt-4">
         <Button
-          variant="secondary"
           className="flex-1 gap-2"
+          disabled={generating}
+          onClick={() => onGenerateImage(frame)}
+        >
+          {generating ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : (
+            <Sparkles className="size-4" />
+          )}
+          {generating ? "Generating…" : "Generate Image"}
+        </Button>
+        <Button
+          variant="secondary"
+          size="icon"
+          aria-label={frame.image_url ? "Change image URL" : "Add image URL"}
           onClick={() => {
             setUrlDraft(frame.image_url ?? "");
             setEditing((v) => !v);
           }}
         >
           <Link2 className="size-4" />
-          {frame.image_url ? "Change image" : "Add image URL"}
         </Button>
         <Button
           variant="ghost"

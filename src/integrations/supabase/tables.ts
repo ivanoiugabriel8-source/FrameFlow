@@ -4,8 +4,23 @@ import { createClient } from "@supabase/supabase-js";
  * Client for the user-owned Supabase project.
  * Reads credentials strictly from Vite environment variables.
  */
-const SUPABASE_URL = import.meta.env['VITE_SUPABASE_URL'];
 const SUPABASE_ANON_KEY = import.meta.env['VITE_SUPABASE_ANON_KEY'];
+
+/** Derive the project URL from the anon key so it always matches the key in use. */
+function urlFromKey(key: string | undefined): string | undefined {
+  try {
+    const part = key?.split(".")[1];
+    if (!part) return undefined;
+    const json = JSON.parse(
+      atob(part.replace(/-/g, "+").replace(/_/g, "/")),
+    ) as { ref?: string };
+    return json.ref ? `https://${json.ref}.supabase.co` : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+const SUPABASE_URL = urlFromKey(SUPABASE_ANON_KEY) ?? import.meta.env['VITE_SUPABASE_URL'];
 
 export type AiModelRow = {
   id: string;
