@@ -37,10 +37,14 @@ export function FrameCard({
   frame,
   onDelete,
   onSetImageUrl,
+  onGenerateImage,
+  generating = false,
 }: {
   frame: Frame;
   onDelete: (id: string) => void;
   onSetImageUrl: (id: string, url: string) => void;
+  onGenerateImage: (frame: Frame) => void;
+  generating?: boolean;
 }) {
   const [editing, setEditing] = useState(false);
   const [urlDraft, setUrlDraft] = useState(frame.image_url ?? "");
