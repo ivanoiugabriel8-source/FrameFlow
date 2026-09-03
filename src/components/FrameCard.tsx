@@ -71,6 +71,12 @@ export function FrameCard({
             <ImageIcon className="size-7 opacity-60 transition-transform duration-300 group-hover:scale-110" />
           </div>
         )}
+        {generating ? (
+          <div className="absolute inset-0 grid place-items-center gap-2 bg-background/70 backdrop-blur-sm">
+            <Loader2 className="size-6 animate-spin text-primary" />
+            <span className="text-xs text-muted-foreground">Generating image…</span>
+          </div>
+        ) : null}
         <span className="absolute left-3 top-3 rounded-full bg-background/80 px-2.5 py-0.5 text-xs font-medium backdrop-blur">
           Shot {frame.frame_number}
         </span>
