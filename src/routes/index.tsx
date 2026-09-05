@@ -472,6 +472,8 @@ function EditorPage() {
                     frame={frame}
                     onDelete={(id) => setFrames((f) => f.filter((x) => x.id !== id))}
                     onSetImageUrl={(id, url) => void setFrameImageUrl(id, url)}
+                    onGenerateImage={(f) => void generateImage(f)}
+                    generating={generatingImages.has(frame.id)}
                   />
                 ))}
               </div>
